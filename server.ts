@@ -16,8 +16,11 @@ import {
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const port = Number(process.env.PORT || 3000);
 const isProduction = process.env.NODE_ENV === 'production';
+const isDirectExecution = process.argv[1]
+  ? path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)
+  : false;
 
-const app = express();
+export const app = express();
 app.use(express.json({ limit: '2mb' }));
 
 const ROBINHOOD_RPC_URL = 'https://rpc.mainnet.chain.robinhood.com';
@@ -1192,28 +1195,30 @@ app.post('/api/launch', async (request, response) => {
   }
 });
 
-if (isProduction) {
-  app.use(express.static(path.join(__dirname, 'dist')));
-  app.get('*', (_request, response) => {
-    response.sendFile(path.join(__dirname, 'dist', 'index.html'));
+if (isDirectExecution) {
+  if (isProduction) {
+    app.use(express.static(path.join(__dirname, 'dist')));
+    app.get('*', (_request, response) => {
+      response.sendFile(path.join(__dirname, 'dist', 'index.html'));
+    });
+  } else {
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: 'spa',
+    });
+    app.use(vite.middlewares);
+  }
+
+  const httpServer = createServer(app);
+  const websocketServer = new WebSocketServer({ server: httpServer, path: '/ws/explore' });
+  websocketServer.on('connection', (socket) => {
+    exploreSockets.add(socket);
+    socket.send(JSON.stringify({ type: 'connected' }));
+    socket.on('close', () => exploreSockets.delete(socket));
+    socket.on('error', () => exploreSockets.delete(socket));
   });
-} else {
-  const vite = await createViteServer({
-    server: { middlewareMode: true },
-    appType: 'spa',
+
+  httpServer.listen(port, () => {
+    console.log(`Tipped server listening on http://localhost:${port}`);
   });
-  app.use(vite.middlewares);
 }
-
-const httpServer = createServer(app);
-const websocketServer = new WebSocketServer({ server: httpServer, path: '/ws/explore' });
-websocketServer.on('connection', (socket) => {
-  exploreSockets.add(socket);
-  socket.send(JSON.stringify({ type: 'connected' }));
-  socket.on('close', () => exploreSockets.delete(socket));
-  socket.on('error', () => exploreSockets.delete(socket));
-});
-
-httpServer.listen(port, () => {
-  console.log(`Tipped server listening on http://localhost:${port}`);
-});

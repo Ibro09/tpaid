@@ -447,9 +447,9 @@ export const TokenDetailView: React.FC<TokenDetailViewProps> = ({ tokens }) => {
     : null;
   const tokenPriceEth = apiPriceEth && apiPriceEth > 0 ? apiPriceEth : curvePriceEth;
   const priceMarketSource = apiPriceEth && apiPriceEth > 0
-    ? 'Pons Family market data'
+    ? 'Pons Family market'
     : curvePriceEth && curvePriceEth > 0
-      ? 'Pons V2 ETH curve · on-chain quote'
+      ? 'Pons V2 ETH curve'
       : 'ETH quote unavailable';
   const marketCap = ponsApiData?.marketCap ?? marketData?.marketCapUsd;
   const tokenAddress = resolvedTokenAddress || id || '';
@@ -515,8 +515,31 @@ export const TokenDetailView: React.FC<TokenDetailViewProps> = ({ tokens }) => {
           <div className="mt-1 font-mono text-sm font-medium text-white">{tokenPriceEth && tokenPriceEth > 0 ? `${tokenPriceEth.toPrecision(8)} ETH` : '—'}</div>
         </div>
         <div className="p-4">
-          <div className="text-xs text-zinc-500">ETH price source</div>
-          <div className="mt-1 text-sm font-medium text-white">{priceMarketSource}</div>
+          <div className="text-xs text-zinc-500">ETH price market</div>
+          <div className="mt-1">
+            {priceMarketSource === 'ETH quote unavailable' ? (
+              <span className="text-sm font-medium text-zinc-500">{priceMarketSource}</span>
+            ) : (
+              <a
+                href={priceMarketSource === 'Pons Family market'
+                  ? `https://www.ponsfamily.com/launchpad/${tokenAddress}`
+                  : `https://robinhoodchain.blockscout.com/address/${ponsDetails?.launch.curve || tokenAddress}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 text-sm font-medium text-zinc-200 transition-colors hover:text-[#c4b5fd]"
+              >
+                {priceMarketSource}
+                <ExternalLink className="h-3 w-3 text-zinc-500" />
+              </a>
+            )}
+          </div>
+          <div className="mt-1 text-[10px] text-zinc-600">
+            {priceMarketSource === 'Pons Family market'
+              ? 'Live token price feed'
+              : priceMarketSource === 'Pons V2 ETH curve'
+                ? 'Simulated against the on-chain curve'
+                : 'No ETH-denominated quote available'}
+          </div>
         </div>
       </section>
 
