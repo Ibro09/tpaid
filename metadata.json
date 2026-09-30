@@ -1,0 +1,6 @@
+{
+  "name": "Tipped - Route Token Fees to TikTok",
+  "description": "Route token creator fees to any Twitch streamer as Bits and Subs with zero login or wallet required. Launch on ponsfamily with automated buyback and burns.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
