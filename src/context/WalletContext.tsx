@@ -17,13 +17,11 @@ interface WalletContextType {
   balance: string | null;
   isConnecting: boolean;
   isRobinhoodChain: boolean;
-  isSimulated: boolean;
   error: string | null;
   hasInjectedProvider: boolean;
   connect: () => Promise<boolean>;
   injectedProviders: Array<{ provider: EthereumProvider; name: string }>;
   connectWithProvider: (provider: EthereumProvider) => Promise<boolean>;
-  connectSimulated: (customAddress?: string) => void;
   disconnect: () => void;
   switchNetwork: () => Promise<boolean>;
   clearError: () => void;
@@ -31,8 +29,18 @@ interface WalletContextType {
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
 
+function clearLegacyDemoWallet() {
+  if (localStorage.getItem('tipped_is_simulated') !== 'true') return false;
+  localStorage.removeItem('tipped_wallet_address');
+  localStorage.removeItem('tipped_chain_id');
+  localStorage.removeItem('tipped_balance');
+  localStorage.removeItem('tipped_is_simulated');
+  return true;
+}
+
 export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [walletAddress, setWalletAddress] = useState<string | null>(() => {
+    if (clearLegacyDemoWallet()) return null;
     return localStorage.getItem('tipped_wallet_address') || null;
   });
   const [chainId, setChainId] = useState<number | null>(() => {
@@ -41,9 +49,6 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   });
   const [balance, setBalance] = useState<string | null>(() => {
     return localStorage.getItem('tipped_balance') || null;
-  });
-  const [isSimulated, setIsSimulated] = useState<boolean>(() => {
-    return localStorage.getItem('tipped_is_simulated') === 'true';
   });
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -98,13 +103,9 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, [balance]);
 
-  useEffect(() => {
-    localStorage.setItem('tipped_is_simulated', isSimulated.toString());
-  }, [isSimulated]);
-
   // Setup event listeners for injected provider
   useEffect(() => {
-    if (!provider || isSimulated) return;
+    if (!provider) return;
 
     const handleAccountsChanged = (accounts: unknown) => {
       const accs = accounts as string[];
@@ -139,7 +140,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         provider.removeListener('chainChanged', handleChainChanged);
       }
     };
-  }, [provider, isSimulated]);
+  }, [provider]);
 
   // Real connection to Robinhood Chain
   const connectWithProvider = useCallback(async (provider: EthereumProvider): Promise<boolean> => {
@@ -152,7 +153,6 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setWalletAddress(result.address);
       setChainId(result.chainId);
       setBalance(result.balance);
-      setIsSimulated(false);
       setIsConnecting(false);
       return true;
     } catch (err: unknown) {
@@ -176,34 +176,17 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return connectWithProvider(providers[0]);
   }, [connectWithProvider]);
 
-  // Simulated Robinhood Chain wallet connection for environments without browser extensions
-  const connectSimulated = useCallback((customAddress?: string) => {
-    const simAddress = customAddress || '0x4663B9a1d94f786E8e28B23f8C751b34F0744663';
-    setWalletAddress(simAddress);
-    setChainId(ROBINHOOD_CHAIN_MAINNET.chainIdDecimal);
-    setBalance('3.450 ETH');
-    setIsSimulated(true);
-    setError(null);
-  }, []);
-
   const disconnect = useCallback(() => {
     setWalletAddress(null);
     setChainId(null);
     setBalance(null);
-    setIsSimulated(false);
     setError(null);
     localStorage.removeItem('tipped_wallet_address');
     localStorage.removeItem('tipped_chain_id');
     localStorage.removeItem('tipped_balance');
-    localStorage.removeItem('tipped_is_simulated');
   }, []);
 
   const switchNetwork = useCallback(async (): Promise<boolean> => {
-    if (isSimulated) {
-      setChainId(ROBINHOOD_CHAIN_MAINNET.chainIdDecimal);
-      return true;
-    }
-
     const activeProvider = selectedProvider || getInjectedProvider();
     if (!activeProvider) {
       setError('NO_WALLET_FOUND');
@@ -220,7 +203,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setError(e?.message || 'Failed to switch network');
       return false;
     }
-  }, [isSimulated, selectedProvider]);
+  }, [selectedProvider]);
 
   return (
     <WalletContext.Provider
@@ -231,13 +214,11 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         balance,
         isConnecting,
         isRobinhoodChain,
-        isSimulated,
         error,
         hasInjectedProvider,
         connect,
         connectWithProvider,
         injectedProviders,
-        connectSimulated,
         disconnect,
         switchNetwork,
         clearError,

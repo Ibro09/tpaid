@@ -28,12 +28,10 @@ export const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose }) => 
     balance,
     isConnecting,
     isRobinhoodChain,
-    isSimulated,
     error,
     connect,
     connectWithProvider,
     injectedProviders,
-    connectSimulated,
     disconnect,
     switchNetwork,
     clearError,
@@ -118,7 +116,7 @@ export const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose }) => 
                 <p className="font-medium">Could not connect</p>
                 <p className="mt-1 text-xs leading-relaxed text-rose-200/70">
                   {error === 'NO_WALLET_FOUND'
-                    ? 'No browser wallet detected. Install a wallet extension or try demo mode.'
+                    ? 'No browser wallet detected. Install a compatible wallet extension to continue.'
                     : error === 'SELECT_WALLET'
                       ? 'Choose a wallet below to continue.'
                       : error}
@@ -161,11 +159,6 @@ export const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose }) => 
                     <span className={`h-1.5 w-1.5 rounded-full ${isRobinhoodChain ? 'bg-emerald-400' : 'bg-amber-300'}`} />
                     {isRobinhoodChain ? 'Connected to Robinhood Chain' : chainName}
                   </div>
-                  {isSimulated && (
-                    <span className="rounded-md border border-[#bca8f7]/15 bg-[#bca8f7]/[0.07] px-2 py-1 text-[10px] font-medium text-[#c4b5fd]">
-                      Demo
-                    </span>
-                  )}
                 </div>
                 <div className="flex items-center justify-between gap-3 rounded-lg border border-white/[0.06] bg-black/20 p-3">
                   <div className="min-w-0">
@@ -258,20 +251,6 @@ export const WalletModal: React.FC<WalletModalProps> = ({ isOpen, onClose }) => 
                   No browser wallet detected. Install a wallet extension to connect.
                 </div>
               )}
-
-              <button
-                onClick={() => {
-                  connectSimulated();
-                  onClose();
-                }}
-                className="flex w-full cursor-pointer items-center justify-between rounded-xl border border-white/[0.06] px-3.5 py-3 text-left transition-colors hover:border-white/[0.12] hover:bg-white/[0.025]"
-              >
-                <span>
-                  <span className="block text-xs font-medium text-zinc-300">Try demo mode</span>
-                  <span className="mt-1 block text-[11px] text-zinc-600">Simulated wallet · no transactions</span>
-                </span>
-                <ArrowUpRight className="h-4 w-4 text-zinc-600" />
-              </button>
 
               <div className="flex items-center justify-center gap-1.5 pt-1 text-[11px] text-zinc-600">
                 <ShieldCheck className="h-3.5 w-3.5 text-[#bca8f7]/70" />
