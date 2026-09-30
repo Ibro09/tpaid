@@ -1,0 +1,5 @@
+[build.environment]
+# These values are non-secret identifiers or public on-chain configuration.
+# Keep credential-bearing variables (database URI, API keys, service-account
+# credentials) out of this list so Netlify continues scanning them.
+SECRETS_SCAN_OMIT_KEYS = "MONGODB_DB,VITE_PONS_V2_DEPLOYMENT_BLOCK,VITE_PONS_V2_LAUNCH_BUY_ROUTER,VITE_PONS_V2_PAIR_TOKEN,VITE_PONS_V2_CREATOR_TAX_BPS"
