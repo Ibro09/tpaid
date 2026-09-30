@@ -38,19 +38,6 @@ export const ROBINHOOD_CHAIN_MAINNET = {
   blockExplorerUrls: ['https://robinhoodchain.blockscout.com'],
 };
 
-export const ROBINHOOD_CHAIN_TESTNET = {
-  chainId: '0xb626', // 46630 in hex
-  chainIdDecimal: 46630,
-  chainName: 'Robinhood Chain Testnet',
-  nativeCurrency: {
-    name: 'Ether',
-    symbol: 'ETH',
-    decimals: 18,
-  },
-  rpcUrls: ['https://rpc.testnet.chain.robinhood.com'],
-  blockExplorerUrls: ['https://explorer.testnet.chain.robinhood.com'],
-};
-
 export function getInjectedProvider(): EthereumProvider | null {
   if (typeof window === 'undefined') return null;
 
@@ -124,7 +111,6 @@ export function formatEthBalance(weiValue: string | number | null): string {
  * Request account connection and prompt switching to Robinhood Chain
  */
 export async function connectAndRequestRobinhoodChain(
-  network: 'mainnet' | 'testnet' = 'mainnet',
   selectedProvider?: EthereumProvider
 ): Promise<{ address: string; chainId: number; balance: string }> {
   const provider = selectedProvider || getInjectedProvider();
@@ -158,7 +144,7 @@ export async function connectAndRequestRobinhoodChain(
   const userAddress = accounts[0];
 
   // 2. Request switch or addition of Robinhood Chain
-  const targetConfig = network === 'testnet' ? ROBINHOOD_CHAIN_TESTNET : ROBINHOOD_CHAIN_MAINNET;
+  const targetConfig = ROBINHOOD_CHAIN_MAINNET;
 
   try {
     await provider.request({
@@ -223,15 +209,13 @@ export async function connectAndRequestRobinhoodChain(
 /**
  * Switch directly to Robinhood Chain if already connected on another network
  */
-export async function switchToRobinhoodChain(
-  network: 'mainnet' | 'testnet' = 'mainnet'
-): Promise<number> {
+export async function switchToRobinhoodChain(): Promise<number> {
   const provider = getInjectedProvider();
   if (!provider) {
     throw new Error('NO_PROVIDER');
   }
 
-  const targetConfig = network === 'testnet' ? ROBINHOOD_CHAIN_TESTNET : ROBINHOOD_CHAIN_MAINNET;
+  const targetConfig = ROBINHOOD_CHAIN_MAINNET;
 
   try {
     await provider.request({

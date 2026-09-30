@@ -7,7 +7,6 @@ import {
   connectAndRequestRobinhoodChain,
   switchToRobinhoodChain,
   ROBINHOOD_CHAIN_MAINNET,
-  ROBINHOOD_CHAIN_TESTNET,
   formatEthBalance,
 } from '../utils/robinhoodChain';
 
@@ -21,14 +20,12 @@ interface WalletContextType {
   isSimulated: boolean;
   error: string | null;
   hasInjectedProvider: boolean;
-  targetNetwork: 'mainnet' | 'testnet';
-  setTargetNetwork: (net: 'mainnet' | 'testnet') => void;
-  connect: (net?: 'mainnet' | 'testnet') => Promise<boolean>;
+  connect: () => Promise<boolean>;
   injectedProviders: Array<{ provider: EthereumProvider; name: string }>;
-  connectWithProvider: (provider: EthereumProvider, net?: 'mainnet' | 'testnet') => Promise<boolean>;
+  connectWithProvider: (provider: EthereumProvider) => Promise<boolean>;
   connectSimulated: (customAddress?: string) => void;
   disconnect: () => void;
-  switchNetwork: (net?: 'mainnet' | 'testnet') => Promise<boolean>;
+  switchNetwork: () => Promise<boolean>;
   clearError: () => void;
 }
 
@@ -48,7 +45,6 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [isSimulated, setIsSimulated] = useState<boolean>(() => {
     return localStorage.getItem('tipped_is_simulated') === 'true';
   });
-  const [targetNetwork, setTargetNetwork] = useState<'mainnet' | 'testnet'>('mainnet');
   const [isConnecting, setIsConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedProvider, setSelectedProvider] = useState<EthereumProvider | null>(null);
@@ -60,15 +56,11 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const provider = typeof window !== 'undefined' ? getInjectedProvider() : null;
   const hasInjectedProvider = !!provider;
 
-  // Determine if active chain is Robinhood Chain (Mainnet 4663 or Testnet 46630)
-  const isRobinhoodChain = chainId === ROBINHOOD_CHAIN_MAINNET.chainIdDecimal || 
-                           chainId === ROBINHOOD_CHAIN_TESTNET.chainIdDecimal;
+  const isRobinhoodChain = chainId === ROBINHOOD_CHAIN_MAINNET.chainIdDecimal;
 
   const chainName =
     chainId === ROBINHOOD_CHAIN_MAINNET.chainIdDecimal
       ? 'Robinhood Chain'
-      : chainId === ROBINHOOD_CHAIN_TESTNET.chainIdDecimal
-      ? 'Robinhood Chain Testnet'
       : chainId === 1
       ? 'Ethereum Mainnet'
       : chainId === 42161
@@ -150,13 +142,12 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, [provider, isSimulated]);
 
   // Real connection to Robinhood Chain
-  const connectWithProvider = useCallback(async (provider: EthereumProvider, net?: 'mainnet' | 'testnet'): Promise<boolean> => {
-    const selectedNet = net || targetNetwork;
+  const connectWithProvider = useCallback(async (provider: EthereumProvider): Promise<boolean> => {
     setIsConnecting(true);
     setError(null);
 
     try {
-      const result = await connectAndRequestRobinhoodChain(selectedNet, provider);
+      const result = await connectAndRequestRobinhoodChain(provider);
       setSelectedProvider(provider);
       setWalletAddress(result.address);
       setChainId(result.chainId);
@@ -174,27 +165,26 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }
       return false;
     }
-  }, [targetNetwork]);
+  }, []);
 
-  const connect = useCallback(async (net?: 'mainnet' | 'testnet'): Promise<boolean> => {
+  const connect = useCallback(async (): Promise<boolean> => {
     const providers = getInjectedProviders();
     if (providers.length !== 1) {
       setError(providers.length === 0 ? 'NO_WALLET_FOUND' : 'SELECT_WALLET');
       return false;
     }
-    return connectWithProvider(providers[0], net);
+    return connectWithProvider(providers[0]);
   }, [connectWithProvider]);
 
   // Simulated Robinhood Chain wallet connection for environments without browser extensions
   const connectSimulated = useCallback((customAddress?: string) => {
-    const targetChain = targetNetwork === 'testnet' ? ROBINHOOD_CHAIN_TESTNET : ROBINHOOD_CHAIN_MAINNET;
     const simAddress = customAddress || '0x4663B9a1d94f786E8e28B23f8C751b34F0744663';
     setWalletAddress(simAddress);
-    setChainId(targetChain.chainIdDecimal);
+    setChainId(ROBINHOOD_CHAIN_MAINNET.chainIdDecimal);
     setBalance('3.450 ETH');
     setIsSimulated(true);
     setError(null);
-  }, [targetNetwork]);
+  }, []);
 
   const disconnect = useCallback(() => {
     setWalletAddress(null);
@@ -208,11 +198,9 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     localStorage.removeItem('tipped_is_simulated');
   }, []);
 
-  const switchNetwork = useCallback(async (net?: 'mainnet' | 'testnet'): Promise<boolean> => {
-    const selectedNet = net || targetNetwork;
+  const switchNetwork = useCallback(async (): Promise<boolean> => {
     if (isSimulated) {
-      const targetConfig = selectedNet === 'testnet' ? ROBINHOOD_CHAIN_TESTNET : ROBINHOOD_CHAIN_MAINNET;
-      setChainId(targetConfig.chainIdDecimal);
+      setChainId(ROBINHOOD_CHAIN_MAINNET.chainIdDecimal);
       return true;
     }
 
@@ -223,7 +211,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
 
     try {
-      const newChainId = await switchToRobinhoodChain(selectedNet);
+      const newChainId = await switchToRobinhoodChain();
       setChainId(newChainId);
       setError(null);
       return true;
@@ -232,7 +220,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setError(e?.message || 'Failed to switch network');
       return false;
     }
-  }, [targetNetwork, isSimulated, selectedProvider]);
+  }, [isSimulated, selectedProvider]);
 
   return (
     <WalletContext.Provider
@@ -246,8 +234,6 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         isSimulated,
         error,
         hasInjectedProvider,
-        targetNetwork,
-        setTargetNetwork,
         connect,
         connectWithProvider,
         injectedProviders,
