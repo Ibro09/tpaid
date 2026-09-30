@@ -1,34 +1,43 @@
-import React, { useState } from 'react';
-import { PaymentReceipt } from '../types';
-import { ExternalLink, Search, CheckCircle2 } from 'lucide-react';
-import { TwitchIcon } from './Icons';
+import React, { useState } from "react";
+import { PaymentReceipt } from "../types";
+import { ExternalLink, Search, CheckCircle2 } from "lucide-react";
+import { TwitchIcon } from "./Icons";
 
 interface PaymentsViewProps {
   receipts: PaymentReceipt[];
   onAddTestPayment?: () => void;
 }
 
-export const PaymentsView: React.FC<PaymentsViewProps> = ({ receipts, onAddTestPayment }) => {
-  const [search, setSearch] = useState('');
+export const PaymentsView: React.FC<PaymentsViewProps> = ({
+  receipts,
+  onAddTestPayment,
+}) => {
+  const [search, setSearch] = useState("");
 
   const filteredReceipts = receipts.filter(
     (r) =>
       r.recipientHandle.toLowerCase().includes(search.toLowerCase()) ||
       r.recipientName.toLowerCase().includes(search.toLowerCase()) ||
-      r.txHash.toLowerCase().includes(search.toLowerCase())
+      r.txHash.toLowerCase().includes(search.toLowerCase()),
   );
 
   const totalPaid = receipts.reduce((acc, r) => acc + r.amount, 0);
   const totalBurned = totalPaid * 0.15;
-  const totalBits = receipts.reduce((acc, r) => acc + (r.bits || r.diamonds), 0);
+  const totalBits = receipts.reduce(
+    (acc, r) => acc + (r.bits || r.diamonds),
+    0,
+  );
 
   return (
     <main className="flex-1 p-4 sm:p-8 max-w-7xl mx-auto w-full space-y-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">Payments & Settlement Ledger</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+            Payments & Settlement Ledger
+          </h1>
           <p className="text-xs text-zinc-400 mt-1">
-            Auditable on-chain transaction history of creator token trading fees routed to Twitch channels.
+            Auditable on-chain transaction history of creator token trading fees
+            routed to Twitch channels.
           </p>
         </div>
 
@@ -51,17 +60,21 @@ export const PaymentsView: React.FC<PaymentsViewProps> = ({ receipts, onAddTestP
           <div className="text-2xl font-bold text-white mt-1 font-mono tabular-nums">
             ${totalPaid.toFixed(2)}
           </div>
-          <span className="text-xs text-zinc-500">85% converted to Twitch Bits & Subs</span>
+          <span className="text-xs text-zinc-500">
+            85% converted to Twitch Bits & Subs
+          </span>
         </div>
 
         <div className="bg-[#111218] border border-zinc-850 rounded-xl p-4">
           <span className="text-[11px] font-medium tracking-wider text-zinc-400 uppercase">
-            $TIPPED Bought & Burned
+            $TPAID Bought & Burned
           </span>
           <div className="text-2xl font-bold text-rose-400 mt-1 font-mono tabular-nums">
             ${totalBurned.toFixed(2)}
           </div>
-          <span className="text-xs text-zinc-500">15% fee share burned on Robinhood Chain</span>
+          <span className="text-xs text-zinc-500">
+            15% fee share burned on Robinhood Chain
+          </span>
         </div>
 
         <div className="bg-[#111218] border border-zinc-850 rounded-xl p-4">
@@ -71,7 +84,9 @@ export const PaymentsView: React.FC<PaymentsViewProps> = ({ receipts, onAddTestP
           <div className="text-2xl font-bold text-[#a970ff] mt-1 font-mono tabular-nums">
             {totalBits.toLocaleString()}
           </div>
-          <span className="text-xs text-zinc-500">Delivered as live on-stream cheer alerts</span>
+          <span className="text-xs text-zinc-500">
+            Delivered as live on-stream cheer alerts
+          </span>
         </div>
       </div>
 
@@ -112,7 +127,10 @@ export const PaymentsView: React.FC<PaymentsViewProps> = ({ receipts, onAddTestP
             </thead>
             <tbody className="divide-y divide-zinc-850/60 font-mono tabular-nums text-zinc-300">
               {filteredReceipts.map((rec) => (
-                <tr key={rec.id} className="hover:bg-zinc-800/20 transition-colors">
+                <tr
+                  key={rec.id}
+                  className="hover:bg-zinc-800/20 transition-colors"
+                >
                   <td className="py-3 px-4 font-sans">
                     <div className="flex items-center gap-2.5">
                       <img
@@ -124,17 +142,24 @@ export const PaymentsView: React.FC<PaymentsViewProps> = ({ receipts, onAddTestP
                       <div>
                         <div className="font-semibold text-white flex items-center gap-1">
                           {rec.recipientName}
-                          {rec.isVerified && <span className="text-[#a970ff] text-xs">✓</span>}
+                          {rec.isVerified && (
+                            <span className="text-[#a970ff] text-xs">✓</span>
+                          )}
                         </div>
-                        <div className="text-[11px] text-zinc-500 font-mono">{rec.recipientHandle}</div>
+                        <div className="text-[11px] text-zinc-500 font-mono">
+                          {rec.recipientHandle}
+                        </div>
                       </div>
                     </div>
                   </td>
 
                   <td className="py-3 px-4">
-                    <div className="font-semibold text-white">${rec.amount.toFixed(2)}</div>
+                    <div className="font-semibold text-white">
+                      ${rec.amount.toFixed(2)}
+                    </div>
                     <div className="text-[10px] text-zinc-500 font-sans">
-                      ${(rec.amount * 0.85).toFixed(2)} creator · ${(rec.amount * 0.15).toFixed(2)} burn
+                      ${(rec.amount * 0.85).toFixed(2)} creator · $
+                      {(rec.amount * 0.15).toFixed(2)} burn
                     </div>
                   </td>
 

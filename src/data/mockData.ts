@@ -190,7 +190,7 @@ export const INITIAL_TOKENS: TokenItem[] = [
     volume24h: 490.00,
     priceChange24h: 22.3,
     age: '2d',
-    description: 'Suiiii! 85% goes to Speed stream, 15% burns $TIPPED on ponsfamily.',
+    description: 'Suiiii! 85% goes to Speed stream, 15% burns $TPAID on ponsfamily.',
     totalFeesPaid: 270.00
   }
 ];
