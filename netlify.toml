@@ -11,7 +11,7 @@ SECRETS_SCAN_OMIT_KEYS = "MONGODB_DB,VITE_PONS_V2_DEPLOYMENT_BLOCK,VITE_PONS_V2_
 
 [functions]
 node_bundler = "esbuild"
-external_node_modules = ["express"]
+external_node_modules = ["express", "vite"]
 
 [[redirects]]
 from = "/api/*"

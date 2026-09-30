@@ -1,8 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
-import { createServer as createViteServer } from 'vite';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { createServer } from 'node:http';
 import { createPrivateKey, createSign } from 'node:crypto';
 import { createPublicClient, decodeEventLog, http, type Address, type Hex } from 'viem';
@@ -13,11 +11,11 @@ import {
   getPonsV2TokenFeeHistory,
 } from './src/utils/ponsV2.ts';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const __dirname = process.cwd();
 const port = Number(process.env.PORT || 3000);
 const isProduction = process.env.NODE_ENV === 'production';
 const isDirectExecution = process.argv[1]
-  ? path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)
+  ? path.basename(process.argv[1]) === 'server.ts'
   : false;
 
 export const app = express();
@@ -1195,13 +1193,14 @@ app.post('/api/launch', async (request, response) => {
   }
 });
 
-if (isDirectExecution) {
+async function startDirectServer() {
   if (isProduction) {
     app.use(express.static(path.join(__dirname, 'dist')));
     app.get('*', (_request, response) => {
       response.sendFile(path.join(__dirname, 'dist', 'index.html'));
     });
   } else {
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
@@ -1220,5 +1219,12 @@ if (isDirectExecution) {
 
   httpServer.listen(port, () => {
     console.log(`Tipped server listening on http://localhost:${port}`);
+  });
+}
+
+if (isDirectExecution) {
+  void startDirectServer().catch((error: unknown) => {
+    console.error('Tipped server failed to start:', error);
+    process.exitCode = 1;
   });
 }
